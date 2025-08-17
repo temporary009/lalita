@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lalita Sahasranama</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Light theme variables */
+            --bg-primary: #f8f5f2;
+            --bg-card: #fff9ef;
+            --text-primary: #2c3e50;
+            --text-secondary: #6b6b6b;
+            --text-accent: #2b1d0e;
+            --accent: #e65a1f;
+            --button-border: #f7931e;
+            --button-hover: rgba(247, 147, 30, 0.1);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme variables */
+            --bg-primary: #1a1a2e;
+            --bg-card: #2b2b3a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-accent: #d6a2e8;
+            --accent: #f7931e;
+            --button-border: #f7931e;
+            --button-hover: rgba(247, 147, 30, 0.2);
+        }
+
+        body {
+            font-family: 'Noto Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            padding: 1rem;
+            box-sizing: border-box; /* Ensure padding is included in width */
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-sizing: border-box; /* Ensure padding is included in width */
+        }
+
+        .theme-toggle i {
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+
+        .hero-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-accent);
+            margin: 2rem 0 1rem;
+            text-align: center;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            padding: 16px;
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            box-sizing: border-box; /* Ensure padding is included in width */
+        }
+
+        .label {
+            background-color: var(--accent);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .content {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .sanskrit {
+            font-size: 1.3rem;
+            color: var(--text-accent);
+            font-weight: bold; /* Make Sanskrit text bold */
+            margin: 0 0 8px 0;
+        }
+
+        .transliteration {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin: 0;
+        }
+
+        .play-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--button-border);
+            color: var(--button-border);
+            background: none;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .play-btn:hover {
+            background: var(--button-hover);
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            .card {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 12px; /* Adjust padding for smaller screens */
+            }
+
+            .play-btn {
+                align-self: flex-end;
+            }
+
+            .sanskrit {
+                font-size: 1.1rem;
+            }
+
+            .transliteration {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-toggle" id="themeToggle" aria-label="Toggle color theme" title="Toggle theme">
+        <i class="fas fa-moon"></i>
+    </div>
+
+    <h1 class="hero-title">Lalita Sahasranama</h1>
+
+    <main class="container" id="slokaContainer">
+        <!-- Cards will be dynamically generated here -->
+    </main>
+
+    <script>
+        // Global variables
+        let currentAudio = null;
+        let currentPlayingButton = null;
+
+        // DOM elements
+        const slokaContainer = document.getElementById('slokaContainer');
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlElement = document.documentElement;
+
+        // Function to fetch JSON data
+        async function fetchJSONData() {
+            try {
+                const slokResponse = await fetch('slok.json');
+                const slokEngResponse = await fetch('slokeng.json');
+
+                const slokData = await slokResponse.json();
+                const slokEngData = await slokEngResponse.json();
+
+                return { slokData, slokEngData };
+            } catch (error) {
+                console.error('Error loading data:', error);
+                return null;
+            }
+        }
+
+        // Generate sloka cards
+        function generateSlokaCards(slokData, slokEngData) {
+            slokaContainer.innerHTML = '';
+
+            Object.keys(slokData).forEach((key, index) => {
+                const sanskritVerse = `${slokData[key].line1}<br>${slokData[key].line2}`;
+                const englishVerse = `${slokEngData[key].line1}<br>${slokEngData[key].line2}`;
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="label">श्लोक ${index + 1}</div>
+                    <div class="content">
+                        <p class="sanskrit">${sanskritVerse}</p>
+                        <p class="transliteration">${englishVerse}</p>
+                    </div>
+                    <button class="play-btn" aria-label="Play audio for sloka ${index + 1}" data-audio="sloka/${index + 1}.mp3">▶</button>
+                `;
+                slokaContainer.appendChild(card);
+            });
+
+            // Add audio play functionality
+            document.querySelectorAll('.play-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const audioFile = this.getAttribute('data-audio');
+
+                    // If clicking the same button that's currently playing
+                    if (currentPlayingButton === this) {
+                        if (!currentAudio.paused) {
+                            currentAudio.pause();
+                            this.textContent = '▶';
+                        } else {
+                            currentAudio.play();
+                            this.textContent = '⏸';
+                        }
+                        return;
+                    }
+
+                    // If there's another audio playing, stop it
+                    if (currentAudio && !currentAudio.paused) {
+                        currentAudio.pause();
+                        if (currentPlayingButton) {
+                            currentPlayingButton.textContent = '▶';
+                        }
+                    }
+
+                    // Create new audio
+                    currentAudio = new Audio(audioFile);
+
+                    // Handle audio events
+                    currentAudio.addEventListener('play', () => {
+                        this.textContent = '⏸';
+                    });
+
+                    currentAudio.addEventListener('pause', () => {
+                        this.textContent = '▶';
+                    });
+
+                    currentAudio.addEventListener('ended', () => {
+                        this.textContent = '▶';
+                        currentPlayingButton = null;
+                    });
+
+                    currentAudio.addEventListener('error', () => {
+                        this.textContent = '⚠';
+                        setTimeout(() => {
+                            this.textContent = '▶';
+                        }, 2000);
+                    });
+
+                    // Play the new audio
+                    currentAudio.play();
+                    currentPlayingButton = this;
+                });
+            });
+        }
+
+        // Theme toggle functionality
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            htmlElement.setAttribute('data-theme', newTheme);
+
+            // Update the icon
+            const icon = themeToggle.querySelector('i');
+            icon.className = newTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        });
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', async function () {
+            const data = await fetchJSONData();
+
+            if (data) {
+                generateSlokaCards(data.slokData, data.slokEngData);
+            } else {
+                slokaContainer.innerHTML = '<div class="loading"><i class="fas fa-exclamation-circle"></i>Failed to load sacred verses. Please try again later.</div>';
+            }
+        });
+    </script>
+</body>
+</html>
